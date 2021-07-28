@@ -63,6 +63,10 @@ public class TradeSnapshot {
 			return ticker;
 		}
 		
+		public void setPrice(Double price) {
+			this.price = price;
+		}
+		
 		public void setQuantity(Integer quantity) {
 			this.quantity = quantity;
 		}

@@ -2,12 +2,13 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Optional;
 
 public class TradeAnalyser {
 	/**
 	 * Read the stock data from a csv file, then return an ArrayList containing
-	 * StockSnapshot objects generated from the data in the csv (each entry in the
+	 * TradeSnapshot objects generated from the data in the csv (each entry in the
 	 * ArrayList corresponds to a line in the csv file)
 	 * 
 	 * @param infile the String representing the name of the file to be opened
@@ -76,7 +77,7 @@ public class TradeAnalyser {
 			// sixth column of values
 			Double price = null;
 			try {
-				price = Double.parseDouble(row[5]);
+				price = Double.valueOf(row[5]);
 			}
 			catch (Exception e) {
 				// TODO Auto-generated catch block
@@ -96,7 +97,7 @@ public class TradeAnalyser {
 			// eighth column of values
 			Double consideration = null;
 			try {
-				consideration = Double.parseDouble(row[7]);
+				consideration = Double.valueOf(row[7]);
 			}
 			catch (Exception e) {
 				// TODO Auto-generated catch block
@@ -106,7 +107,7 @@ public class TradeAnalyser {
 			// ninth column of values
 			Double commission = null;
 			try {
-				commission = Double.parseDouble(row[8]);
+				commission = Double.valueOf(row[8]);
 			}
 			catch (Exception e) {
 				// TODO Auto-generated catch block
@@ -116,7 +117,7 @@ public class TradeAnalyser {
 			// tenth column of values
 			Double exchangeRate = null;
 			try {
-				exchangeRate = Double.parseDouble(row[9]);
+				exchangeRate = Double.valueOf(row[9]);
 			}
 			catch (Exception e) {
 				// TODO Auto-generated catch block
@@ -135,18 +136,23 @@ public class TradeAnalyser {
 		System.out.println(trades.size());
 		
 		for (TradeSnapshot trade : trades) {
+			
+	        if (trade.getName().equals("Tesla Motors Inc (All Sessions)")) {
+	        	System.out.println(trade.getConsideration());
+	        }
+			
 		        if(combinedTrades.stream().anyMatch(o -> o.getName().equals(trade.getName()))) {
 		        	// found same name
 		        	// combine with existing item
-		        	for (TradeSnapshot tradeCombined : trades) {
+		        	for (TradeSnapshot tradeCombined : combinedTrades) {
 		        		if (tradeCombined.getName().equals(trade.getName())) {
-		        			try {
-		        				
-		        			} catch (Exception ex) {
-					        	tradeCombined.setQuantity(Integer.valueOf(tradeCombined.getQuantity() + trade.getQuantity()));
-					        	tradeCombined.setConsideration(tradeCombined.getConsideration() + trade.getConsideration());
-					        	tradeCombined.setCommission(tradeCombined.getCommission() + trade.getCommission());
-		        			}
+		        			
+					        tradeCombined.setQuantity(Integer.valueOf(tradeCombined.getQuantity() + trade.getQuantity()));
+					        tradeCombined.setConsideration(tradeCombined.getConsideration() + trade.getConsideration());
+					        
+					        if (trade.getName().equals("Tesla Motors Inc (All Sessions)")) {
+					        	System.out.println(tradeCombined.getConsideration() + " + " + trade.getConsideration() + " = " + tradeCombined.getConsideration() + trade.getConsideration());
+					        }
 		        		}
 		        	}
 		        } else {
@@ -159,9 +165,14 @@ public class TradeAnalyser {
 		return combinedTrades;
 	}
 	
-	// simulate buying and selling in order to find capital gains
-	private static ArrayList<TradeSnapshot> simulateBuySell(ArrayList<TradeSnapshot> trades) {
-		return null;
+	private static ArrayList<TradeSnapshot> convertTradesToAUD(ArrayList<TradeSnapshot> trades) {
+		for (TradeSnapshot trade : trades) {
+			if (trade.getCurrency().equals("USD")) {
+				trade.setConsideration(trade.getConsideration() * trade.getExchangeRate());
+				trade.setPrice(trade.getPrice() * trade.getExchangeRate());
+			}
+		}
+		return trades;
 	}
 	
 	private static Double findCapitalGains(ArrayList<TradeSnapshot> trades) {
@@ -182,15 +193,27 @@ public class TradeAnalyser {
 			System.out.println("Exception: " + e);
 		}
 		
-		/*
+		// Order by oldest date first
+		Collections.reverse(trades);
+		
+		// convert to AUD
+		trades = convertTradesToAUD(trades);
+		
 		ArrayList<TradeSnapshot> combinedTrades = combineTrades(trades);
 		
+		Double total = 0d;
 		for(TradeSnapshot trade : combinedTrades) {
-			System.out.println(trade.getName() + ", ");
-			System.out.println(trade.getConsideration() + ", ");
-			System.out.println("-");
+			if (trade.getQuantity() == 0) {
+				System.out.println(trade.getName() + ", ");
+				System.out.println(trade.getConsideration() + ", ");
+				System.out.println("-");	
+				total += trade.getConsideration();
+			}
 		}
-		*/
+		System.out.print("TOTAL P&L: ");
+		System.out.println(total);
+		
+		
 		
 		// check if the stock data was read correctly
 		/*
